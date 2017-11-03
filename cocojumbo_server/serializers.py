@@ -2,25 +2,23 @@ from rest_framework import serializers
 from cocojumbo_server.models import User,Camera,Alert
 
 
-class CameraSerializer(serializers.Serializer):
-    id = serializers.IntegerField(read_only=True)
+class CameraSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Camera
+        fields = ('id', 'name')
 
 
-class UserSerializer(serializers.Serializer):
-    id = serializers.IntegerField(read_only=True)
-    username = serializers.CharField(required=True)
-    password = serializers.CharField(required=True)
-    email = serializers.CharField(required=True)
+class UserSerializer(serializers.ModelSerializer):
     cameras = CameraSerializer(many=True, required=False)
 
-    def create(self, validated_data):
-        return User.objects.create(**validated_data)
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'password', 'email', 'cameras')
 
-    def update(self, instance, validated_data):
-        instance.username = validated_data.get('username',instance.username)
-        instance.password = validated_data.get('password',instance.password)
-        instance.email = validated_data.get('password',instance.email)
-        instance.cameras = validated_data.get('cameras', instance.cameras)
 
-        instance.save()
-        return instance
+class AlertSerializer(serializers.ModelSerializer):
+    user = UserSerializer(many=False, required=True)
+
+    class Meta:
+        model = Alert
+        fields = ('id', 'timestamp', 'user', 'message')

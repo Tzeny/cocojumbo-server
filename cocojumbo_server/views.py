@@ -1,19 +1,62 @@
-from django.contrib.auth.models import User, Group
-from rest_framework import viewsets
-from cocojumbo_server.serializers import UserSerializer, GroupSerializer
+from rest_framework import status
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+
+from cocojumbo_server.serializers import UserSerializer, CameraSerializer, AlertSerializer
+from cocojumbo_server.models import  User, Camera, Alert
 
 
-class UserViewSet(viewsets.ModelViewSet):
-    """
-    API endpoint that allows users to be viewed or edited.
-    """
-    queryset = User.objects.all().order_by('-date_joined')
-    serializer_class = UserSerializer
+@api_view(['GET', 'POST'])
+def user_list(request):
+    if request.method == "GET":
+        users = User.objects.all();
+        serializer = UserSerializer(users, many=True)
+        return Response(serializer.data)
+
+    if request.method == "POST":
+        serializer = UserSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_404_NOT_FOUND)
 
 
-class GroupViewSet(viewsets.ModelViewSet):
+@api_view(['GET', 'POST'])
+def camera_list(request):
+    if request.method == "GET":
+        cameras = Camera.objects.all();
+        serializer = CameraSerializer(cameras, many=True)
+        return Response(serializer.data)
+
+    if request.method == "POST":
+        serializer = CameraSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_404_NOT_FOUND)
+
+
+@api_view(['GET', 'PUT', 'DELETE'])
+def user_detail(request, pk):
     """
-    API endpoint that allows groups to be viewed or edited.
+    Retrieve, update or delete a code snippet.
     """
-    queryset = Group.objects.all()
-    serializer_class = GroupSerializer
+    try:
+        user = User.objects.get(pk=pk)
+    except User.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
+
+    elif request.method == 'PUT':
+        serializer = UserSerializer(user, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    elif request.method == 'DELETE':
+        user.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
